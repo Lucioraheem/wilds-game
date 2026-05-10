@@ -3,79 +3,216 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>WILDS 3D — Survival Sandbox</title>
+<title>WILDS v10.0 — Survival Sandbox</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a14;overflow:hidden;width:100vw;height:100dvh;font-family:'Arial',sans-serif;user-select:none;-webkit-user-select:none;touch-action:manipulation;position:fixed}
+body{
+  background:#0a0a14;overflow:hidden;
+  width:100vw;height:100dvh;
+  font-family:'Arial',sans-serif;
+  user-select:none;-webkit-user-select:none;
+  touch-action:manipulation;position:fixed;
+}
 #gameContainer{position:fixed;top:0;left:0;width:100%;height:100%}
 canvas{display:block}
 
-/* ══ HUD ══ */
-#topBar{position:fixed;top:8px;left:8px;right:8px;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;z-index:10;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.85) 0%,transparent 100%);gap:8px;border-radius:12px}
-.hudCard{background:rgba(8,8,25,.82);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:8px 12px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 4px 20px rgba(0,0,0,.5)}
-#playerCard{display:flex;align-items:center;gap:8px;min-width:130px}
-#playerIcon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
-.icon-warrior{background:linear-gradient(135deg,#3b82f6,#1d4ed8);box-shadow:0 0 15px rgba(59,130,246,.5)}
+/* ══ SELEÇÃO DE CLASSE ══ */
+#classSelect{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,.95);z-index:100;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:24px;
+}
+#classSelect h1{font-size:24px;color:#fbbf24;letter-spacing:4px;text-shadow:0 0 30px rgba(245,158,11,.6)}
+#classSelect h2{font-size:12px;color:#888;letter-spacing:2px}
+.classCards{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;padding:0 16px}
+.classCard{
+  width:130px;padding:20px 14px;border-radius:16px;
+  text-align:center;cursor:pointer;transition:all .3s;
+  background:rgba(10,10,30,.9);border:2px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.classCard:hover{transform:translateY(-8px)}
+.classCard:active{transform:scale(.95)}
+.classCard.warrior:hover{border-color:#3b82f6;box-shadow:0 0 40px rgba(59,130,246,.4)}
+.classCard.archer:hover{border-color:#22c55e;box-shadow:0 0 40px rgba(34,197,94,.4)}
+.classCard.mage:hover{border-color:#a855f7;box-shadow:0 0 40px rgba(168,85,247,.4)}
+.ccIcon{font-size:48px;margin-bottom:10px}
+.ccName{font-size:13px;color:#f0e6d3;font-weight:700;margin-bottom:6px}
+.ccDesc{font-size:8px;color:#666;line-height:1.5}
+.ccStats{font-size:8px;color:#888;margin-top:8px;line-height:1.6}
+
+/* ══ LOADING ══ */
+#loadingScreen{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,.9);z-index:90;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:16px;
+}
+#loadingScreen.hidden{display:none}
+#loadingText{font-size:12px;color:#fbbf24;letter-spacing:2px}
+#loadingBarBg{width:200px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+#loadingBar{height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:2px;transition:width .3s}
+#loadingPct{font-size:10px;color:#888}
+
+/* ══ TOP HUD ══ */
+#topHud{
+  position:fixed;top:8px;left:8px;right:8px;z-index:10;
+  pointer-events:none;display:flex;gap:8px;
+  align-items:flex-start;flex-wrap:wrap;
+}
+.hudCard{
+  background:rgba(8,8,25,.85);border:1px solid rgba(255,255,255,.06);
+  border-radius:14px;padding:10px 14px;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 4px 24px rgba(0,0,0,.5);
+}
+#playerCard{display:flex;align-items:center;gap:10px;min-width:140px}
+#playerAvatar{
+  width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;transition:all .5s;
+}
+.avatar-warrior{background:linear-gradient(135deg,#3b82f6,#1d4ed8);box-shadow:0 0 18px rgba(59,130,246,.6)}
+.avatar-archer{background:linear-gradient(135deg,#166534,#14532d);box-shadow:0 0 18px rgba(22,101,52,.6)}
+.avatar-mage{background:linear-gradient(135deg,#7c3aed,#5b21b6);box-shadow:0 0 18px rgba(124,58,237,.6)}
 #playerInfo{display:flex;flex-direction:column;gap:1px}
 #pName{font-size:10px;font-weight:700;color:#f0e6d3}
+#pClass{font-size:8px;color:#888}
 #pLevel{font-size:8px;color:#fbbf24;font-weight:600}
 
 #barsCard{display:flex;gap:10px}
 .vitalItem{display:flex;flex-direction:column;align-items:center;gap:2px}
 .vitalIcon{font-size:13px}
-.vitalBarBg{width:44px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
-.vitalBar{height:100%;border-radius:2px;transition:width .3s}
-.vb-hp{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,.5)}
-.vb-st{background:#10b981;box-shadow:0 0 6px rgba(16,185,129,.5)}
-.vitalVal{font-size:7px;color:#888}
+.vitalBarBg{width:46px;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.vitalBar{height:100%;border-radius:2px;transition:width .4s}
+.vb-hp{background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,.5)}
+.vb-st{background:#10b981;box-shadow:0 0 8px rgba(16,185,129,.5)}
+.vb-xp{background:#a855f7;box-shadow:0 0 8px rgba(168,85,247,.5)}
+.vitalVal{font-size:7px;color:#8b8fa8;font-weight:600}
 
-#goldPill{padding:4px 10px;border-radius:12px;font-size:9px;font-weight:700;color:#fbbf24;background:rgba(8,8,25,.6);border:1px solid rgba(245,158,11,.2)}
+#goldPill{padding:5px 12px;border-radius:14px;font-size:9px;font-weight:700;color:#fbbf24;background:rgba(8,8,25,.7);border:1px solid rgba(245,158,11,.2);white-space:nowrap}
+
+/* ══ QUEST TRACKER ══ */
+#questTracker{
+  position:fixed;top:90px;right:8px;z-index:10;pointer-events:none;
+  background:rgba(8,8,25,.82);border:1px solid rgba(245,158,11,.15);
+  border-radius:12px;padding:10px 12px;max-width:150px;
+  backdrop-filter:blur(10px);box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+#qTitle{font-size:7px;letter-spacing:2px;color:#fbbf24;font-weight:700;margin-bottom:4px}
+#qName{font-size:8px;color:#e2d9c8;line-height:1.3;margin-bottom:4px}
+#qBar{height:3px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;margin-bottom:3px}
+#qFill{height:100%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:2px;box-shadow:0 0 8px rgba(245,158,11,.4);transition:width .5s}
+#qPct{font-size:7px;color:#fbbf24;text-align:right}
 
 /* ══ JOYSTICK ══ */
-#joystickZone{position:fixed;bottom:20px;left:20px;width:110px;height:110px;z-index:20;pointer-events:auto}
-#joystickBase{width:110px;height:110px;border-radius:50%;background:rgba(8,8,25,.5);border:2px solid rgba(255,255,255,.1);position:relative}
-#joystickKnob{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.35);position:absolute;top:32px;left:32px;transition:transform .03s}
+#joystickZone{position:fixed;bottom:20px;left:16px;width:110px;height:110px;z-index:20;pointer-events:auto}
+#joystickBase{width:110px;height:110px;border-radius:50%;background:rgba(8,8,25,.5);border:2px solid rgba(255,255,255,.08);position:relative}
+#joystickKnob{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.3);position:absolute;top:33px;left:33px;transition:transform .03s;box-shadow:0 0 15px rgba(255,255,255,.06)}
 
 /* ══ BOTÕES ══ */
-#actionButtons{position:fixed;bottom:20px;right:15px;z-index:20;display:flex;gap:8px;align-items:flex-end;pointer-events:auto}
-.bigBtn{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:26px;border:3px solid rgba(255,255,255,.15);box-shadow:0 4px 20px rgba(0,0,0,.5);transition:all .1s}
-.bigBtn:active{transform:scale(.85)}
-#btnAttack{background:linear-gradient(135deg,#ef4444,#dc2626);border-color:#ef4444;box-shadow:0 0 30px rgba(239,68,68,.4);animation:atkGlow 1.5s infinite alternate}
-@keyframes atkGlow{from{box-shadow:0 0 18px rgba(239,68,68,.3)}to{box-shadow:0 0 40px rgba(239,68,68,.6)}}
+#actionButtons{position:fixed;bottom:20px;right:12px;z-index:20;display:flex;gap:8px;align-items:flex-end;pointer-events:auto}
+.bigBtn{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:26px;border:3px solid rgba(255,255,255,.12);box-shadow:0 4px 20px rgba(0,0,0,.5);transition:all .1s;-webkit-tap-highlight-color:transparent}
+.bigBtn:active{transform:scale(.82)}
+#btnAttack{background:linear-gradient(135deg,#ef4444,#dc2626);border-color:#ef4444;box-shadow:0 0 35px rgba(239,68,68,.4);animation:atkGlow 1.5s infinite alternate}
+@keyframes atkGlow{from{box-shadow:0 0 18px rgba(239,68,68,.3)}to{box-shadow:0 0 45px rgba(239,68,68,.6)}}
 #btnCollect{width:46px;height:46px;background:rgba(8,8,25,.6);border-color:rgba(52,211,153,.5);font-size:20px}
+#btnDash{width:46px;height:46px;background:rgba(8,8,25,.6);border-color:rgba(168,85,247,.5);font-size:20px}
 
 /* ══ FLOATS ══ */
 #floatLayer{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:15}
-.fNum{position:absolute;font-weight:900;white-space:nowrap;animation:fUp .7s ease-out forwards;font-family:'Arial',sans-serif}
-.fCrit{font-size:24px;color:#fbbf24;text-shadow:0 0 20px #f59e0b}
-.fDmg{font-size:14px;color:#fca5a5;text-shadow:0 0 8px #ef4444}
-@keyframes fUp{0%{transform:translateY(0)scale(.5);opacity:1}30%{transform:translateY(-30px)scale(1.3)}100%{transform:translateY(-60px)scale(.3);opacity:0}}
+.fNum{position:absolute;font-weight:900;white-space:nowrap;animation:fUp .8s ease-out forwards}
+.fCrit{font-size:24px;color:#fbbf24;text-shadow:0 0 25px #f59e0b,0 0 50px #f97316}
+.fDmg{font-size:15px;color:#fca5a5;text-shadow:0 0 10px #ef4444}
+.fGold{font-size:13px;color:#fde047;text-shadow:0 0 12px #f59e0b}
+.fHeal{font-size:12px;color:#86efac;text-shadow:0 0 10px #22c55e}
+@keyframes fUp{0%{transform:translateY(0)scale(.5);opacity:1}30%{transform:translateY(-32px)scale(1.3)}100%{transform:translateY(-65px)scale(.2);opacity:0}}
 
-#notifs{position:fixed;top:50px;left:50%;transform:translateX(-50%);z-index:18;pointer-events:none}
-.notif{padding:6px 16px;border-radius:14px;font-size:9px;font-weight:600;background:rgba(8,8,25,.9);border:1px solid rgba(255,255,255,.1);animation:notifIn .3s ease;margin-bottom:3px;text-align:center;white-space:nowrap}
+#notifs{position:fixed;top:55px;left:50%;transform:translateX(-50%);z-index:18;pointer-events:none}
+.notif{padding:6px 16px;border-radius:14px;font-size:9px;font-weight:600;background:rgba(8,8,25,.92);border:1px solid rgba(255,255,255,.08);animation:notifIn .3s ease;margin-bottom:3px;text-align:center;white-space:nowrap}
 @keyframes notifIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══ RESPONSIVO ══ */
+@media(max-width:380px){
+  #joystickZone{width:90px;height:90px;bottom:12px;left:8px}
+  #joystickBase{width:90px;height:90px}
+  #joystickKnob{width:36px;height:36px;top:27px;left:27px}
+  .bigBtn{width:50px;height:50px;font-size:22px}
+  #btnCollect,#btnDash{width:38px;height:38px;font-size:16px}
+  #actionButtons{bottom:12px;right:6px;gap:5px}
+  #classCard{width:100px;padding:14px 10px}
+  .ccIcon{font-size:36px}
+}
 </style>
 </head>
 <body>
 
 <div id="gameContainer"></div>
 
-<div id="topBar">
+<!-- SELEÇÃO DE CLASSE -->
+<div id="classSelect">
+  <h1>⚔ WILDS</h1>
+  <h2>ESCOLHA SEU HERÓI</h2>
+  <div class="classCards">
+    <div class="classCard warrior" onclick="selectClass('warrior')">
+      <div class="ccIcon">🛡</div>
+      <div class="ccName">GUERREIRO</div>
+      <div class="ccDesc">Mestre da Espada</div>
+      <div class="ccStats">❤ +30% DEF<br>⚔ Espada Longa<br>🌀 Giro Laminar</div>
+    </div>
+    <div class="classCard archer" onclick="selectClass('archer')">
+      <div class="ccIcon">🏹</div>
+      <div class="ccName">ARQUEIRO</div>
+      <div class="ccDesc">Caçador das Sombras</div>
+      <div class="ccStats">🎯 +25% CRIT<br>🏹 Arco Composto<br>✨ Flecha Tripla</div>
+    </div>
+    <div class="classCard mage" onclick="selectClass('mage')">
+      <div class="ccIcon">🔮</div>
+      <div class="ccName">MAGO</div>
+      <div class="ccDesc">Arcano Supremo</div>
+      <div class="ccStats">💫 +35% MAGIA<br>🌀 Cajado Arcano<br>🛡 Barreira Mística</div>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loadingScreen" class="hidden">
+  <div id="loadingText">CARREGANDO MODELO 3D...</div>
+  <div id="loadingBarBg"><div id="loadingBar"></div></div>
+  <div id="loadingPct">0%</div>
+</div>
+
+<!-- HUD -->
+<div id="topHud">
   <div class="hudCard" id="playerCard">
-    <div id="playerIcon" class="icon-warrior">🛡</div>
-    <div id="playerInfo"><div id="pName">GUERREIRO</div><div id="pLevel">Nv.<span>1</span></div></div>
+    <div id="playerAvatar" class="avatar-warrior">🛡</div>
+    <div id="playerInfo">
+      <div id="pName">GUERREIRO</div>
+      <div id="pClass">ESPADA LONGA</div>
+      <div id="pLevel">Nv.<span>1</span></div>
+    </div>
   </div>
   <div class="hudCard" id="barsCard">
-    <div class="vitalItem"><span class="vitalIcon">❤</span><div class="vitalBarBg"><div class="vitalBar vb-hp" id="hpFill" style="width:100%"></div></div><span class="vitalVal"><span id="hpV">100</span>/<span id="hpM">100</span></span></div>
-    <div class="vitalItem"><span class="vitalIcon">💨</span><div class="vitalBarBg"><div class="vitalBar vb-st" id="stFill" style="width:100%"></div></div><span class="vitalVal" id="stV">100</span></div>
+    <div class="vitalItem"><span class="vitalIcon">❤</span><div class="vitalBarBg"><div class="vitalBar vb-hp" id="hpFill" style="width:100%"></div></div><span class="vitalVal"><span id="hpv">130</span>/<span id="hpm">130</span></span></div>
+    <div class="vitalItem"><span class="vitalIcon">💨</span><div class="vitalBarBg"><div class="vitalBar vb-st" id="stFill" style="width:100%"></div></div><span class="vitalVal" id="stv">100</span></div>
+    <div class="vitalItem"><span class="vitalIcon">⭐</span><div class="vitalBarBg"><div class="vitalBar vb-xp" id="xpFill" style="width:0%"></div></div><span class="vitalVal"><span id="xpv">0</span>/<span id="xpn">100</span></span></div>
   </div>
-  <div id="goldPill">💰 <span id="goldV">0</span></div>
+  <div id="goldPill">💰 <span id="goldv">0</span> ⚔ <span id="killv">0</span></div>
+</div>
+
+<div id="questTracker">
+  <div id="qTitle">📋 MISSÃO</div>
+  <div id="qName">Abata 5 criaturas</div>
+  <div id="qBar"><div id="qFill" style="width:0%"></div></div>
+  <div id="qPct">0/5</div>
 </div>
 
 <div id="joystickZone"><div id="joystickBase"><div id="joystickKnob"></div></div></div>
 
 <div id="actionButtons">
   <button class="bigBtn" id="btnCollect" onclick="window.collect()">🌿</button>
+  <button class="bigBtn" id="btnDash" onclick="window.useAbility()">💨</button>
   <button class="bigBtn" id="btnAttack" onclick="window.attack()">⚔</button>
 </div>
 
@@ -91,144 +228,318 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // ═══════════════════════════════════════════════════════════════
-//  WILDS 3D — COM MODELO GLB DO TRIPO
+//  WILDS v10.0 — TODOS OS SISTEMAS INTEGRADOS
+//  - Carrega guerreiro.glb
+//  - Fallback se não carregar
+//  - 3 Classes selecionáveis
+//  - Criaturas por raridade
+//  - Iluminação melhorada
 // ═══════════════════════════════════════════════════════════════
 
 const container = document.getElementById('gameContainer');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#1a1a2e');
-scene.fog = new THREE.FogExp2('#1a1a2e', 0.000012);
+scene.fog = new THREE.FogExp2('#1a1a2e', 0.00001);
 
-const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 1, 500);
-camera.position.set(0, 20, 28);
+const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 1, 500);
+camera.position.set(0, 22, 30);
 camera.lookAt(0, 0, 0);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.3;
+renderer.toneMappingExposure = 1.4;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 container.appendChild(renderer.domElement);
 
-// ── Luzes ──
-scene.add(new THREE.AmbientLight('#2a2050', 2.5));
-const sun = new THREE.DirectionalLight('#ffeac8', 6);
-sun.position.set(40, 50, 30);
-sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
-scene.add(sun);
-scene.add(new THREE.HemisphereLight('#87ceeb', '#362312', 0.8));
+// ── Iluminação Premium ──
+const ambientLight = new THREE.AmbientLight('#3a3060', 2.8);
+scene.add(ambientLight);
+const sunLight = new THREE.DirectionalLight('#fff5e0', 7);
+sunLight.position.set(50, 70, 35);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(2048, 2048);
+sunLight.shadow.camera.near = 1;
+sunLight.shadow.camera.far = 400;
+sunLight.shadow.camera.left = -90;
+sunLight.shadow.camera.right = 90;
+sunLight.shadow.camera.top = 90;
+sunLight.shadow.camera.bottom = -90;
+sunLight.shadow.bias = -0.0001;
+scene.add(sunLight);
+const hemiLight = new THREE.HemisphereLight('#b1e1ff', '#4a3728', 1.2);
+scene.add(hemiLight);
 
-// ── Terreno ──
-const groundGeom = new THREE.PlaneGeometry(100, 100, 50, 50);
-const ga = groundGeom.attributes.position.array;
-for (let i = 0; i < ga.length; i += 3) {
-  ga[i + 1] = Math.sin(ga[i] * 0.05) * Math.cos(ga[i + 2] * 0.05) * 1.0 + Math.sin(ga[i] * 0.12) * 0.5;
+// ── Terreno Ondulado ──
+const groundGeom = new THREE.PlaneGeometry(120, 120, 80, 80);
+const posArr = groundGeom.attributes.position.array;
+for (let i = 0; i < posArr.length; i += 3) {
+  const x = posArr[i], z = posArr[i + 2];
+  posArr[i + 1] = Math.sin(x * 0.04) * Math.cos(z * 0.04) * 1.4 +
+    Math.sin(x * 0.1 + z * 0.08) * 0.7 +
+    Math.sin(x * 0.2) * Math.cos(z * 0.18) * 0.3;
 }
 groundGeom.computeVertexNormals();
-const ground = new THREE.Mesh(groundGeom, new THREE.MeshStandardMaterial({ color: '#1a1a10', roughness: 0.9 }));
+const groundMat = new THREE.MeshStandardMaterial({
+  color: '#1a1a0e',
+  roughness: 0.88,
+  metalness: 0.04
+});
+const ground = new THREE.Mesh(groundGeom, groundMat);
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// ── Árvores ──
-const treeGrp = new THREE.Group();
-scene.add(treeGrp);
-function createTree(x, z) {
+// ── Vegetação Densa ──
+const vegetationGrp = new THREE.Group();
+scene.add(vegetationGrp);
+
+function createTree(x, z, scale = 1) {
   const g = new THREE.Group();
-  g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 2, 6), new THREE.MeshStandardMaterial({ color: '#422010' })));
-  const cols = ['#0d3b0d', '#145214', '#1a6b1a'];
-  for (let i = 0; i < 3; i++) {
-    const c = new THREE.Mesh(new THREE.ConeGeometry(0.9 - i * 0.18, 1.1, 6), new THREE.MeshStandardMaterial({ color: cols[i] }));
-    c.position.y = 1.5 + i * 0.7;
-    g.add(c);
+  const trunkGeom = new THREE.CylinderGeometry(0.14 * scale, 0.22 * scale, 2.5 * scale, 8);
+  const trunkMat = new THREE.MeshStandardMaterial({ color: '#3d2817', roughness: 0.9 });
+  const trunk = new THREE.Mesh(trunkGeom, trunkMat);
+  trunk.position.y = 1.25 * scale;
+  trunk.castShadow = true;
+  trunk.receiveShadow = true;
+  g.add(trunk);
+  const foliageColors = ['#0d3b0d', '#145214', '#1a6b1a', '#1f7a1f'];
+  for (let i = 0; i < 4; i++) {
+    const coneGeom = new THREE.ConeGeometry((1.1 - i * 0.2) * scale, (1.2 - i * 0.1) * scale, 8);
+    const coneMat = new THREE.MeshStandardMaterial({ color: foliageColors[i], roughness: 0.75 });
+    const cone = new THREE.Mesh(coneGeom, coneMat);
+    cone.position.y = (2.0 + i * 0.75) * scale;
+    cone.castShadow = true;
+    cone.receiveShadow = true;
+    g.add(cone);
   }
-  g.children[0].position.y = 1;
+  g.position.set(x, 0, z);
+  g.scale.setScalar(scale);
+  return g;
+}
+
+function createBush(x, z) {
+  const g = new THREE.Group();
+  for (let i = 0; i < 4; i++) {
+    const sphereGeom = new THREE.SphereGeometry(0.3 + Math.random() * 0.35, 6, 6);
+    const sphereMat = new THREE.MeshStandardMaterial({ color: '#145214', roughness: 0.8 });
+    const sphere = new THREE.Mesh(sphereGeom, sphereMat);
+    sphere.position.set(Math.random() * 0.5 - 0.25, i * 0.25, Math.random() * 0.5 - 0.25);
+    sphere.castShadow = true;
+    g.add(sphere);
+  }
   g.position.set(x, 0, z);
   return g;
 }
-for (let i = 0; i < 80; i++) treeGrp.add(createTree((Math.random() - 0.5) * 90, (Math.random() - 0.5) * 90));
+
+function createCrystal(x, z) {
+  const g = new THREE.Group();
+  const crystalColors = ['#7c3aed', '#a855f7', '#c4b5fd', '#ddd6fe'];
+  for (let i = 0; i < 4; i++) {
+    const coneGeom = new THREE.ConeGeometry(0.18 + i * 0.06, 0.5 + Math.random() * 0.5, 6);
+    const coneMat = new THREE.MeshStandardMaterial({
+      color: crystalColors[i],
+      roughness: 0.12,
+      metalness: 0.7,
+      emissive: crystalColors[i],
+      emissiveIntensity: 0.7
+    });
+    const cone = new THREE.Mesh(coneGeom, coneMat);
+    cone.position.set((Math.random() - 0.5) * 0.5, 0.3 + Math.random() * 0.4, (Math.random() - 0.5) * 0.5);
+    cone.rotation.z = (Math.random() - 0.5) * 0.4;
+    g.add(cone);
+  }
+  g.position.set(x, 0, z);
+  return g;
+}
+
+for (let i = 0; i < 200; i++) {
+  const mx = (Math.random() - 0.5) * 110;
+  const mz = (Math.random() - 0.5) * 110;
+  const roll = Math.random();
+  if (roll < 0.6) {
+    vegetationGrp.add(createTree(mx, mz, 0.5 + Math.random() * 1.2));
+  } else if (roll < 0.85) {
+    vegetationGrp.add(createBush(mx, mz));
+  } else {
+    vegetationGrp.add(createCrystal(mx, mz));
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════
-//  CARREGAR MODELO GLB DO TRIPO
+//  PLAYER GROUP (Modelo GLB ou Fallback)
 // ═══════════════════════════════════════════════════════════════
 const playerGrp = new THREE.Group();
 scene.add(playerGrp);
-
-const loader = new GLTFLoader();
 let playerModel = null;
+let modelLoaded = false;
 
-// ⚠️ TROQUE 'guerreiro.glb' PELO NOME DO SEU ARQUIVO ⚠️
-loader.load(
-  'guerreiro.glb',  // ← NOME DO SEU ARQUIVO AQUI
-  (gltf) => {
-    playerModel = gltf.scene;
-    playerModel.scale.set(0.8, 0.8, 0.8);
-    playerGrp.add(playerModel);
-    notify('✅ Modelo 3D carregado!', '#4ade80');
-    console.log('Modelo carregado:', gltf);
-  },
-  (progress) => {
-    const pct = Math.floor((progress.loaded / progress.total) * 100);
-    console.log('Carregando modelo... ' + pct + '%');
-  },
-  (error) => {
-    console.error('❌ Erro ao carregar modelo:', error);
-    notify('❌ Erro ao carregar modelo! Usando fallback...', '#ef4444');
-    createFallbackPlayer();
-  }
-);
+function createFallbackPlayer(color = '#3b82f6') {
+  while (playerGrp.children.length > 0) playerGrp.remove(playerGrp.children[0]);
 
-// Fallback se o GLB não carregar
-function createFallbackPlayer() {
-  const bodyGeom = new THREE.CapsuleGeometry(0.5, 1.2, 8, 16);
-  const body = new THREE.Mesh(bodyGeom, new THREE.MeshStandardMaterial({ color: '#3b82f6', roughness: 0.3 }));
+  const bodyGeom = new THREE.CapsuleGeometry(0.5, 1.3, 8, 16);
+  const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.25, metalness: 0.5 });
+  const body = new THREE.Mesh(bodyGeom, bodyMat);
   body.position.y = 1.3;
   body.castShadow = true;
   playerGrp.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 16), new THREE.MeshStandardMaterial({ color: '#ffd5b8', roughness: 0.4 }));
-  head.position.y = 2.3;
+
+  const headGeom = new THREE.SphereGeometry(0.48, 16, 16);
+  const headMat = new THREE.MeshStandardMaterial({ color: '#ffd5b8', roughness: 0.35, metalness: 0.05 });
+  const head = new THREE.Mesh(headGeom, headMat);
+  head.position.y = 2.4;
+  head.castShadow = true;
   playerGrp.add(head);
+
+  const eyeGeom = new THREE.SphereGeometry(0.07, 6, 6);
+  const eyeMat = new THREE.MeshStandardMaterial({ color: '#000', roughness: 0.1 });
+  const leftEye = new THREE.Mesh(eyeGeom, eyeMat);
+  leftEye.position.set(-0.15, 2.55, 0.4);
+  playerGrp.add(leftEye);
+  const rightEye = new THREE.Mesh(eyeGeom, eyeMat);
+  rightEye.position.set(0.15, 2.55, 0.4);
+  playerGrp.add(rightEye);
 }
 
-// ── Game State ──
-const PL = {
-  x: 0, z: 0, vx: 0, vz: 0, angle: 0, spd: 8,
-  hp: 100, maxHp: 100, stamina: 100, maxStamina: 100,
-  xp: 0, xpNext: 100, level: 1, kills: 0, gold: 0,
-  attackDmg: 16, attackRange: 4, critChance: 0.1, attackCD: 0, attackCDMax: 0.4,
-  invincible: 0, dead: false, weapons: [], activeWeapon: 0,
-  class: 'warrior'
+const loader = new GLTFLoader();
+const modelPath = 'guerreiro.glb';
+
+function loadPlayerModel() {
+  document.getElementById('loadingScreen').classList.remove('hidden');
+  document.getElementById('loadingText').textContent = 'CARREGANDO guerreiro.glb...';
+  document.getElementById('loadingBar').style.width = '10%';
+  document.getElementById('loadingPct').textContent = '10%';
+
+  loader.load(
+    modelPath,
+    (gltf) => {
+      modelLoaded = true;
+      while (playerGrp.children.length > 0) playerGrp.remove(playerGrp.children[0]);
+      playerModel = gltf.scene;
+      playerModel.scale.set(0.8, 0.8, 0.8);
+      playerModel.position.y = 0;
+      playerModel.traverse((node) => {
+        if (node.isMesh) {
+          node.castShadow = true;
+          node.receiveShadow = true;
+        }
+      });
+      playerGrp.add(playerModel);
+      document.getElementById('loadingScreen').classList.add('hidden');
+      notify('✅ guerreiro.glb carregado!', '#4ade80');
+      console.log('Modelo 3D carregado com sucesso!');
+    },
+    (progress) => {
+      if (progress.total > 0) {
+        const pct = Math.floor((progress.loaded / progress.total) * 100);
+        document.getElementById('loadingBar').style.width = pct + '%';
+        document.getElementById('loadingPct').textContent = pct + '%';
+      }
+    },
+    (error) => {
+      console.warn('Modelo GLB não encontrado, usando fallback:', error);
+      document.getElementById('loadingScreen').classList.add('hidden');
+      notify('⚠ Modelo não encontrado, usando fallback', '#f59e0b');
+      createFallbackPlayer('#3b82f6');
+    }
+  );
+}
+
+// ── Classes ──
+const CLASSES = {
+  warrior: { name: 'GUERREIRO', icon: '🛡', color: '#3b82f6', hp: 130, spd: 7, atk: 18, desc: 'ESPADA LONGA' },
+  archer: { name: 'ARQUEIRO', icon: '🏹', color: '#22c55e', hp: 90, spd: 10, atk: 22, desc: 'ARCO COMPOSTO' },
+  mage: { name: 'MAGO', icon: '🔮', color: '#a855f7', hp: 80, spd: 6, atk: 28, desc: 'CAJADO ARCANO' },
 };
 
+const PL = {
+  x: 0, z: 0, vx: 0, vz: 0, angle: 0, spd: 7,
+  hp: 130, maxHp: 130, stamina: 100, maxStamina: 100,
+  xp: 0, xpNext: 100, level: 1, kills: 0, gold: 0,
+  attackDmg: 18, attackRange: 5, critChance: 0.08, attackCD: 0, attackCDMax: 0.4,
+  invincible: 0, dead: false,
+  class: 'warrior',
+};
+
+function selectClass(cls) {
+  PL.class = cls;
+  const c = CLASSES[cls];
+  PL.maxHp = c.hp; PL.hp = c.hp; PL.spd = c.spd; PL.attackDmg = c.atk;
+  document.getElementById('playerAvatar').className = 'avatar-' + cls;
+  document.getElementById('playerAvatar').textContent = c.icon;
+  document.getElementById('pName').textContent = c.name;
+  document.getElementById('pClass').textContent = c.desc;
+  document.getElementById('hpv').textContent = c.hp;
+  document.getElementById('hpm').textContent = c.hp;
+  document.getElementById('hpFill').style.width = '100%';
+  document.getElementById('classSelect').style.display = 'none';
+  if (!modelLoaded) createFallbackPlayer(c.color);
+  notify('🛡 ' + c.name + ' escolhido!', c.color);
+}
+window.selectClass = selectClass;
+
 // ── Criaturas ──
-const creatureGrp = new THREE.Group();
-scene.add(creatureGrp);
+const BESTIARY = {
+  wolf: { name: 'Lobo Sombrio', hp: 40, dmg: 8, spd: 2, size: 0.8, color: '#4b5563', eye: '#ef4444', weight: 30 },
+  rabbit: { name: 'Coelho Vorpal', hp: 20, dmg: 3, spd: 3.5, size: 0.4, color: '#d4a76a', eye: '#000', weight: 15 },
+  slime: { name: 'Slime Verde', hp: 30, dmg: 5, spd: 0.8, size: 0.6, color: '#84cc16', eye: '#fff', weight: 10 },
+  skeleton: { name: 'Esqueleto', hp: 70, dmg: 15, spd: 1.5, size: 0.9, color: '#f5f5f4', eye: '#000', weight: 8 },
+  spider: { name: 'Aranha Gigante', hp: 55, dmg: 12, spd: 2.2, size: 1, color: '#1e1b4b', eye: '#ef4444', weight: 6 },
+  elemental: { name: 'Elemental de Fogo', hp: 60, dmg: 18, spd: 1, size: 0.9, color: '#f97316', eye: '#fff', weight: 5 },
+  dragon: { name: 'Dragão Jovem', hp: 150, dmg: 25, spd: 2.5, size: 2.5, color: '#dc2626', eye: '#fde047', weight: 2 },
+  golem: { name: 'Golem de Pedra', hp: 200, dmg: 20, spd: 0.5, size: 2, color: '#78716c', eye: '#22c55e', weight: 2 },
+  witch: { name: 'Bruxa Sombria', hp: 120, dmg: 30, spd: 1.8, size: 1, color: '#4c1d95', eye: '#a855f7', weight: 2 },
+  knight: { name: 'Cavaleiro Maldito', hp: 350, dmg: 45, spd: 2, size: 1.2, color: '#1a1a1a', eye: '#7c3aed', weight: 1 },
+};
+
 let creatures = [];
 
 function spawnCreature() {
+  const pool = [];
+  Object.entries(BESTIARY).forEach(([key, def]) => {
+    for (let i = 0; i < (def.weight || 1); i++) pool.push({ key, ...def });
+  });
+  const def = pool[Math.floor(Math.random() * pool.length)];
+
   const g = new THREE.Group();
-  const s = 0.6 + Math.random() * 1.4;
-  const colors = ['#ef4444', '#f59e0b', '#8b5cf6', '#06b6d4', '#10b981'];
-  const color = colors[Math.floor(Math.random() * colors.length)];
-  const body = new THREE.Mesh(new THREE.SphereGeometry(s * 0.6, 8, 8), new THREE.MeshStandardMaterial({ color, roughness: 0.35 }));
-  body.position.y = s * 0.8;
+  const bodyGeom = new THREE.SphereGeometry(def.size * 0.65, 10, 10);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: def.color, roughness: 0.35, metalness: 0.1 });
+  const body = new THREE.Mesh(bodyGeom, bodyMat);
+  body.position.y = def.size * 0.85;
+  body.castShadow = true;
   g.add(body);
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(s * 0.12, 4, 4), new THREE.MeshStandardMaterial({ color: '#fff', emissive: '#fff', emissiveIntensity: 0.7 }));
-  eye.position.set(s * 0.22, s * 1.0, s * 0.35);
+
+  const eyeGeom = new THREE.SphereGeometry(def.size * 0.13, 6, 6);
+  const eyeMat = new THREE.MeshStandardMaterial({ color: def.eye, emissive: def.eye, emissiveIntensity: 0.8 });
+  const eye = new THREE.Mesh(eyeGeom, eyeMat);
+  eye.position.set(def.size * 0.25, def.size * 1.1, def.size * 0.4);
   g.add(eye);
-  const d = 12 + Math.random() * 38, a = Math.random() * Math.PI * 2;
+
+  if (def.key === 'knight' || def.key === 'dragon') {
+    const auraGeom = new THREE.RingGeometry(def.size * 0.7, def.size * 0.8, 16);
+    const auraMat = new THREE.MeshBasicMaterial({ color: '#a855f7', side: THREE.DoubleSide, transparent: true, opacity: 0.4 });
+    const aura = new THREE.Mesh(auraGeom, auraMat);
+    aura.rotation.x = -Math.PI / 2;
+    aura.position.y = 0.05;
+    g.add(aura);
+  }
+
+  const d = 15 + Math.random() * 45;
+  const a = Math.random() * Math.PI * 2;
   g.position.set(Math.cos(a) * d, 0, Math.sin(a) * d);
   scene.add(g);
+
   creatures.push({
-    mesh: g, hp: 30 + Math.floor(s * 28), maxHp: 30 + Math.floor(s * 28),
-    dmg: 5 + Math.floor(s * 7), spd: 1 + Math.random() * 2, size: s,
+    mesh: g, def, hp: def.hp, maxHp: def.hp, dmg: def.dmg, spd: def.spd, size: def.size,
     x: g.position.x, z: g.position.z,
     state: 'wander', wAngle: Math.random() * Math.PI * 2, wTimer: 2 + Math.random() * 3, atkTimer: 0
   });
 }
-for (let i = 0; i < 18; i++) spawnCreature();
+
+for (let i = 0; i < 30; i++) spawnCreature();
 
 // ── Combate ──
 function attack() {
@@ -239,23 +550,22 @@ function attack() {
   let hit = false;
   for (let i = creatures.length - 1; i >= 0; i--) {
     const c = creatures[i];
-    if (Math.hypot(PL.x - c.x, PL.z - c.z) < PL.attackRange + c.size) {
+    const dist = Math.hypot(PL.x - c.x, PL.z - c.z);
+    if (dist < PL.attackRange + c.size) {
       c.hp -= dmg;
       spawnFloat(PL.x, PL.z, dmg, crit ? 'fCrit' : 'fDmg');
       if (c.hp <= 0) {
         PL.kills++;
-        PL.xp += 15 + Math.floor(c.size * 5);
-        PL.gold += 3 + Math.floor(Math.random() * 18);
+        PL.xp += 15 + Math.floor(c.size * 6);
+        PL.gold += 4 + Math.floor(Math.random() * 20);
         scene.remove(c.mesh);
         creatures.splice(i, 1);
-        setTimeout(spawnCreature, 2500 + Math.random() * 4000);
+        setTimeout(spawnCreature, 2000 + Math.random() * 4000);
         while (PL.xp >= PL.xpNext) {
-          PL.xp -= PL.xpNext;
-          PL.level++;
-          PL.xpNext = Math.floor(PL.xpNext * 1.25);
-          PL.maxHp += 22;
-          PL.hp = Math.min(PL.hp + 22, PL.maxHp);
-          PL.attackDmg += 4;
+          PL.xp -= PL.xpNext; PL.level++;
+          PL.xpNext = Math.floor(PL.xpNext * 1.28);
+          PL.maxHp += 22; PL.hp = Math.min(PL.hp + 22, PL.maxHp);
+          PL.attackDmg += 4; PL.skillPoints = (PL.skillPoints || 0) + 1;
           notify('⬆ NÍVEL ' + PL.level + '!', '#fbbf24');
         }
       }
@@ -265,14 +575,11 @@ function attack() {
   }
   if (!hit) spawnFloat(PL.x, PL.z, 'MISS', 'fDmg');
   updateHUD();
+  updateQuest();
 }
 
-function collect() {
-  PL.xp += 3;
-  PL.gold += 2;
-  spawnFloat(PL.x, PL.z, '+2 💰', 'fCrit');
-  updateHUD();
-}
+function collect() { PL.xp += 3; PL.gold += 3; spawnFloat(PL.x, PL.z, '+3 💰', 'fGold'); updateHUD() }
+function useAbility() { if (PL.stamina >= 18) { PL.stamina -= 18; PL.x += Math.cos(PL.angle) * 12; PL.z += Math.sin(PL.angle) * 12; PL.invincible = 0.3 } }
 
 // ── Floats ──
 function spawnFloat(x, z, text, cls) {
@@ -280,34 +587,35 @@ function spawnFloat(x, z, text, cls) {
   const sx = ((x - camera.position.x) * 14 + innerWidth / 2);
   const sy = (-(z - camera.position.z) * 8 + innerHeight / 2);
   if (sx < -40 || sx > innerWidth + 40 || sy < -40 || sy > innerHeight + 40) return;
-  const d = document.createElement('div');
-  d.className = 'fNum ' + cls;
-  d.textContent = text;
-  d.style.left = sx + 'px';
-  d.style.top = sy + 'px';
-  el.appendChild(d);
-  setTimeout(() => d.remove(), 800);
+  const d = document.createElement('div'); d.className = 'fNum ' + cls; d.textContent = text;
+  d.style.left = sx + 'px'; d.style.top = sy + 'px';
+  el.appendChild(d); setTimeout(() => d.remove(), 800);
 }
-
-function notify(msg, color = '#fbbf24') {
-  const n = document.createElement('div');
-  n.className = 'notif';
-  n.textContent = msg;
-  n.style.color = color;
-  n.style.borderColor = color + '44';
-  document.getElementById('notifs').appendChild(n);
-  setTimeout(() => n.remove(), 2500);
+function notify(msg, color) {
+  const n = document.createElement('div'); n.className = 'notif'; n.textContent = msg;
+  n.style.color = color; n.style.borderColor = color + '44';
+  document.getElementById('notifs').appendChild(n); setTimeout(() => n.remove(), 3000);
 }
 
 // ── HUD ──
 function updateHUD() {
-  document.getElementById('hpV').textContent = Math.ceil(PL.hp);
-  document.getElementById('hpM').textContent = PL.maxHp;
+  document.getElementById('hpv').textContent = Math.ceil(PL.hp);
+  document.getElementById('hpm').textContent = PL.maxHp;
   document.getElementById('hpFill').style.width = (PL.hp / PL.maxHp * 100) + '%';
-  document.getElementById('stV').textContent = Math.ceil(PL.stamina);
+  document.getElementById('stv').textContent = Math.ceil(PL.stamina);
   document.getElementById('stFill').style.width = (PL.stamina / PL.maxStamina * 100) + '%';
-  document.getElementById('goldV').textContent = PL.gold;
+  document.getElementById('xpv').textContent = PL.xp;
+  document.getElementById('xpn').textContent = PL.xpNext;
+  document.getElementById('xpFill').style.width = (PL.xp / PL.xpNext * 100) + '%';
+  document.getElementById('goldv').textContent = PL.gold;
+  document.getElementById('killv').textContent = PL.kills;
   document.querySelector('#pLevel span').textContent = PL.level;
+}
+function updateQuest() {
+  const p = Math.min(PL.kills, 5);
+  document.getElementById('qFill').style.width = (p / 5 * 100) + '%';
+  document.getElementById('qPct').textContent = p + '/5';
+  if (p >= 5) document.getElementById('qName').textContent = '✅ Completo!';
 }
 
 // ── Joystick ──
@@ -316,12 +624,8 @@ const jKnob = document.getElementById('joystickKnob');
 document.getElementById('joystickZone').addEventListener('touchstart', (e) => {
   e.preventDefault();
   const r = document.getElementById('joystickZone').getBoundingClientRect();
-  joy.active = true;
-  joy.startX = r.left + r.width / 2;
-  joy.startY = r.top + r.height / 2;
-  joy.dx = 0;
-  joy.dy = 0;
-  jKnob.style.transform = 'translate(0px,0px)';
+  joy.active = true; joy.startX = r.left + r.width / 2; joy.startY = r.top + r.height / 2;
+  joy.dx = 0; joy.dy = 0; jKnob.style.transform = 'translate(0px,0px)';
 }, { passive: false });
 window.addEventListener('touchmove', (e) => {
   if (!joy.active) return;
@@ -329,28 +633,28 @@ window.addEventListener('touchmove', (e) => {
   let dx = t.clientX - joy.startX, dy = t.clientY - joy.startY;
   const d = Math.hypot(dx, dy), mr = 30;
   if (d > mr) { dx = dx / d * mr; dy = dy / d * mr; }
-  joy.dx = dx / mr;
-  joy.dy = dy / mr;
+  joy.dx = dx / mr; joy.dy = dy / mr;
   jKnob.style.transform = `translate(${dx}px,${dy}px)`;
 }, { passive: false });
-window.addEventListener('touchend', () => { joy.active = false; joy.dx = 0; joy.dy = 0; jKnob.style.transform = 'translate(0px,0px)'; });
+window.addEventListener('touchend', () => { joy.active = false; joy.dx = 0; joy.dy = 0; jKnob.style.transform = 'translate(0px,0px)' });
 
 // ── Teclado ──
 const keys = {};
-addEventListener('keydown', e => {
+addEventListener('keydown', (e) => {
   keys[e.key.toLowerCase()] = true;
   if (e.key === ' ' || e.key === 'f') attack();
-  if (e.key === 'g') collect();
+  if (e.key === 'g' || e.key === 'e') collect();
+  if (e.key === 'q') useAbility();
   e.preventDefault();
 });
-addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false });
 
 // ── Game Loop ──
-const clock2 = new THREE.Clock();
+const clock = new THREE.Clock();
 let spawnTimer = 0;
 
 function update() {
-  const dt = Math.min(clock2.getDelta(), 0.1);
+  const dt = Math.min(clock.getDelta(), 0.1);
   if (!PL.dead) {
     let mx = 0, mz = 0;
     if (keys['w'] || keys['arrowup']) mz -= 1;
@@ -360,50 +664,48 @@ function update() {
     if (joy.active) { mx = joy.dx; mz = joy.dy; }
     const len = Math.hypot(mx, mz);
     if (len > 0.1) { mx /= len; mz /= len; }
-    PL.vx += (mx * PL.spd - PL.vx) * 8 * dt;
-    PL.vz += (mz * PL.spd - PL.vz) * 8 * dt;
-    PL.x += PL.vx * dt;
-    PL.z += PL.vz * dt;
-    PL.x = Math.max(-45, Math.min(45, PL.x));
-    PL.z = Math.max(-45, Math.min(45, PL.z));
+    PL.vx += (mx * PL.spd - PL.vx) * 9 * dt;
+    PL.vz += (mz * PL.spd - PL.vz) * 9 * dt;
+    PL.x += PL.vx * dt; PL.z += PL.vz * dt;
+    PL.x = Math.max(-55, Math.min(55, PL.x)); PL.z = Math.max(-55, Math.min(55, PL.z));
     if (len > 0.1) PL.angle = Math.atan2(mx, mz);
-    PL.stamina = Math.min(PL.maxStamina, PL.stamina + 25 * dt);
+    PL.stamina = Math.min(PL.maxStamina, PL.stamina + 26 * dt);
     if (PL.attackCD > 0) PL.attackCD -= dt;
     if (PL.invincible > 0) PL.invincible -= dt;
+
     playerGrp.position.set(PL.x, 0, PL.z);
     playerGrp.rotation.y = PL.angle;
 
     creatures.forEach(c => {
       const dx = PL.x - c.x, dz = PL.z - c.z, dist = Math.hypot(dx, dz);
       if (c.atkTimer > 0) c.atkTimer -= dt;
-      if (dist < 10) c.state = 'hunt';
-      else if (c.state === 'hunt' && dist > 18) c.state = 'wander';
+      if (dist < 12) c.state = 'hunt';
+      else if (c.state === 'hunt' && dist > 20) c.state = 'wander';
       if (c.state === 'wander') {
         c.wTimer -= dt;
         if (c.wTimer <= 0) { c.wAngle += Math.random() * Math.PI; c.wTimer = 2 + Math.random() * 3; }
-        c.mesh.position.x += Math.cos(c.wAngle) * c.spd * 0.25 * dt;
-        c.mesh.position.z += Math.sin(c.wAngle) * c.spd * 0.25 * dt;
+        c.mesh.position.x += Math.cos(c.wAngle) * c.spd * 0.28 * dt;
+        c.mesh.position.z += Math.sin(c.wAngle) * c.spd * 0.28 * dt;
       } else {
         const a = Math.atan2(dx, dz);
         c.mesh.position.x += Math.cos(a) * c.spd * dt;
         c.mesh.position.z += Math.sin(a) * c.spd * dt;
         c.mesh.lookAt(PL.x, 0, PL.z);
-        if (dist < 2 + c.size && c.atkTimer <= 0 && PL.invincible <= 0) {
-          PL.hp -= c.dmg;
-          PL.invincible = 0.25;
+        if (dist < 2.2 + c.size && c.atkTimer <= 0 && PL.invincible <= 0) {
+          PL.hp -= c.dmg; PL.invincible = 0.25;
           spawnFloat(PL.x, PL.z, '-' + c.dmg, 'fDmg');
           c.atkTimer = 1;
           if (PL.hp <= 0) { PL.hp = 0; PL.dead = true; notify('💀 MORREU!', '#ef4444'); }
         }
       }
-      c.x = c.mesh.position.x;
-      c.z = c.mesh.position.z;
+      c.x = c.mesh.position.x; c.z = c.mesh.position.z;
     });
 
     spawnTimer -= dt;
-    if (spawnTimer <= 0 && creatures.length < 20) { spawnCreature(); spawnTimer = 2 + Math.random() * 3; }
-    const tx = PL.x + 6, tz = PL.z + 10;
-    camera.position.lerp(new THREE.Vector3(tx, 20, tz), 4 * dt);
+    if (spawnTimer <= 0 && creatures.length < 35) { spawnCreature(); spawnTimer = 1.5 + Math.random() * 3; }
+
+    const tx = PL.x + 7, tz = PL.z + 11;
+    camera.position.lerp(new THREE.Vector3(tx, 22, tz), 5 * dt);
     camera.lookAt(PL.x, 0, PL.z);
   }
   updateHUD();
@@ -411,8 +713,13 @@ function update() {
   requestAnimationFrame(update);
 }
 
+// ── Init ──
+createFallbackPlayer('#3b82f6');
+loadPlayerModel();
 updateHUD();
+updateQuest();
 update();
+
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
@@ -421,10 +728,11 @@ addEventListener('resize', () => {
 
 window.attack = attack;
 window.collect = collect;
+window.useAbility = useAbility;
 
-console.log('⚔ WILDS 3D — Aguardando modelo GLB...');
-console.log('📂 Coloque o arquivo .glb na mesma pasta do HTML');
-console.log('✏️ Troque "guerreiro.glb" pelo nome do seu arquivo');
+console.log('⚔ WILDS v10.0 — COMPLETO');
+console.log('🛡 3 Classes | 🐺 10 Criaturas | 🌳 200 Árvores');
+console.log('📦 Carregando guerreiro.glb...');
 </script>
 </body>
 </html>
